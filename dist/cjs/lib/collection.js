@@ -52,7 +52,7 @@ class Collection {
         if (!filter)
             return [...this.documents.values()];
         if (limit < 2)
-            return console.log('Limit must be more than 2 or u can use the findOne Function');
+            return console.log('Limit must be more than 2 or you can use the findOne function');
         const matches = [];
         for (const doc of this.documents.values()) {
             if (limit > 2 && matches.length === limit)
@@ -64,7 +64,7 @@ class Collection {
     }
     findOne(filter = null) {
         if (!filter)
-            return console.log('Must be a set a filter');
+            return console.log('Must set a filter');
         for (const doc of this.documents.values()) {
             if ((0, helper_js_1.default)(filter, doc))
                 return doc;

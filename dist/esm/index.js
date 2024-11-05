@@ -1,1 +1,3 @@
-export { default as mgdb } from './lib/database.js';
+import Database from './lib/database.js';
+export { Database };
+export default Database;
