@@ -1,0 +1,12 @@
+{
+  "include": ["src/**/*", "src/types.ts"],
+  "compilerOptions": {
+    "declaration": true,
+    "removeComments": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "target": "ES2022",
+    "moduleResolution": "Node",
+    "esModuleInterop": true
+  }
+}
