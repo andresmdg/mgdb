@@ -7,24 +7,27 @@ const node_path_1 = __importDefault(require("node:path"));
 const node_fs_1 = require("node:fs");
 const collection_js_1 = __importDefault(require("./collection.js"));
 /**
- * Representa un clúster de colecciones en una base de datos.
- * Un clúster es un contenedor que agrupa varias colecciones dentro de una base de datos.
+ * Representa un clúster de colecciones dentro de una base de datos.
+ * Un clúster agrupa múltiples colecciones y gestiona la persistencia de sus datos.
+ * @class
  */
 class Cluster {
     /** El nombre del clúster. */
     name;
     /** La base de datos a la que pertenece el clúster. */
     database;
-    /** La ruta donde se almacenan las colecciones del clúster. */
+    /** La ruta en el sistema de archivos donde se almacenan las colecciones del clúster. */
     path;
-    /** Un mapa de las colecciones del clúster, donde la clave es el nombre de la colección y el valor es la instancia de la colección. */
+    /** Un mapa de colecciones que contiene el nombre de cada colección y su correspondiente instancia. */
     collections;
-    /** Un indicador que señala si el clúster ha sido guardado o "flushed". */
+    /** Indica si el clúster ha sido "flushed" o si las colecciones han sido guardadas. */
     flushed;
     /**
      * Crea una nueva instancia de la clase Cluster.
      * @param {Database} database - La base de datos a la que pertenece el clúster.
      * @param {string} name - El nombre del clúster.
+     * @example
+     * const cluster = new Cluster(database, 'myCluster');
      */
     constructor(database, name) {
         this.name = name;
@@ -32,6 +35,7 @@ class Cluster {
         this.path = node_path_1.default.join(database.path, name);
         this.collections = new Map();
         this.flushed = false;
+        // Si la ruta ya existe, leer las colecciones dentro de ella
         if ((0, node_fs_1.existsSync)(this.path)) {
             const entries = (0, node_fs_1.readdirSync)(this.path, { withFileTypes: true });
             for (const entry of entries) {
@@ -42,6 +46,7 @@ class Cluster {
             }
         }
         else {
+            // Si la ruta no existe, crearla
             (0, node_fs_1.mkdirSync)(this.path);
         }
         // Guardar las colecciones cuando el proceso termine
@@ -50,7 +55,10 @@ class Cluster {
     /**
      * Obtiene una colección por su nombre. Si la colección no existe, se crea una nueva.
      * @param {string} collName - El nombre de la colección que se desea obtener.
-     * @returns {Collection} La instancia de la colección.
+     * @returns {Collection} La instancia de la colección correspondiente al nombre proporcionado.
+     * @throws {Error} Si el nombre de la colección es inválido.
+     * @example
+     * const collection = cluster.collection('myCollection');
      */
     collection(collName) {
         const existing = this.collections.get(collName);
@@ -61,15 +69,20 @@ class Cluster {
         return collection;
     }
     /**
-     * Guarda todas las colecciones del clúster. Si se pasa `sync = true`, el guardado será sincrónico.
-     * @param {boolean} [sync=false] - Si es `true`, guarda las colecciones de forma sincrónica; si es `false`, lo hace de forma asíncrona.
+     * Guarda todas las colecciones del clúster. Si `sync` es `true`, las colecciones se guardan de forma sincrónica.
+     * @param {boolean} [sync=false] - Si es `true`, guarda las colecciones de forma sincrónica; si es `false`, se hace de forma asíncrona.
      * @returns {Promise<void>} Una promesa que se resuelve cuando todas las colecciones se han guardado.
+     * @example
+     * // Guardado asíncrono
+     * await cluster.flush(false);
+     *
+     * // Guardado sincrónico
+     * cluster.flush(true);
      */
     async flush(sync = false) {
         if (this.flushed)
             return;
         const savePromises = [];
-        // Guardar las colecciones
         for (const collection of this.collections.values()) {
             if (sync) {
                 collection.saveSync();

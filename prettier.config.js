@@ -1,10 +1,10 @@
 const options = {
   arrowParens: 'avoid',
-  printWidth: 100,
-  proseWrap: 'never',
   singleQuote: true,
+  bracketSpacing: true,
   trailingComma: 'es5',
   tabWidth: 2,
+  endOfLine: 'lf',
   semi: false,
 }
 

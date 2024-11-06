@@ -11,7 +11,7 @@
   "keywords": [],
   "author": "andresmdg",
   "license": "ISC",
-  "sideEffect": false,
+  "sideEffects": false,
   "exports": {
     ".": {
       "node": {
