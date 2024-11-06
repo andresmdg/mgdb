@@ -46,7 +46,7 @@ class Collection {
     /**
      * Inserta un nuevo documento en la colección con un ID único generado.
      * @param {object} data - Los datos del documento a insertar.
-     * @returns {object} El documento insertado con su ID.
+     * @returns {DocumentType} El documento insertado con su ID.
      */
     insert(data) {
         const id = (0, node_crypto_1.randomUUID)();
@@ -75,15 +75,15 @@ class Collection {
     }
     /**
      * Busca documentos que coincidan con un filtro específico.
-     * @param {any} [filter=null] - Un objeto de filtro para buscar documentos específicos. Si es `null`, devuelve todos los documentos.
+     * @param {object} [filter=null] - Un objeto de filtro para buscar documentos específicos. Si es `null`, devuelve todos los documentos.
      * @param {number} [limit=2] - El número máximo de documentos a devolver.
-     * @returns {Array} Un array con los documentos que coinciden con el filtro.
+     * @returns {DocumentType[]} Un array con los documentos que coinciden con el filtro.
      */
     find(filter = null, limit = 2) {
         if (!filter)
             return [...this.documents.values()];
         if (limit < 2)
-            return console.log('Limit must be more than 2 or you can use the findOne function');
+            return [];
         const matches = [];
         for (const doc of this.documents.values()) {
             if (limit > 2 && matches.length === limit)
@@ -95,12 +95,12 @@ class Collection {
     }
     /**
      * Busca un solo documento que coincida con el filtro proporcionado.
-     * @param {any} [filter=null] - Un objeto de filtro para encontrar el documento. Si es `null`, muestra un mensaje de advertencia.
-     * @returns {object|null} El documento que coincide con el filtro o `null` si no se encuentra.
+     * @param {object} [filter=null] - Un objeto de filtro para encontrar el documento. Si es `null`, muestra un mensaje de advertencia.
+     * @returns {DocumentType|null} El documento que coincide con el filtro o `null` si no se encuentra.
      */
     findOne(filter = null) {
         if (!filter)
-            return console.log('Must set a filter');
+            return null;
         for (const doc of this.documents.values()) {
             if ((0, helper_js_1.default)(filter, doc))
                 return doc;
@@ -110,23 +110,23 @@ class Collection {
     /**
      * Encuentra un documento por su ID.
      * @param {string} id - El ID del documento a buscar.
-     * @returns {object|null} El documento con el ID proporcionado o `null` si no se encuentra.
+     * @returns {DocumentType|null} El documento con el ID proporcionado o `null` si no se encuentra.
      */
     findById(id) {
         return this.documents.get(id) || null;
     }
     /**
      * Actualiza un solo documento en la colección basado en un filtro.
-     * @param {any} [filter=null] - El filtro que se usa para encontrar el documento. Si es `null`, muestra un mensaje de advertencia.
+     * @param {object} [filter=null] - El filtro que se usa para encontrar el documento. Si es `null`, muestra un mensaje de advertencia.
      * @param {object} data - Los nuevos datos que se van a actualizar en el documento.
-     * @returns {object|null} El documento actualizado o `null` si no se encuentra.
+     * @returns {DocumentType|null} El documento actualizado o `null` si no se encuentra.
      */
     updateOne(filter = null, data) {
         if (!filter)
-            return console.log('You must provide a filter');
+            return null;
         const doc = [...this.documents.values()].find(doc => (0, helper_js_1.default)(filter, doc));
         if (!doc) {
-            return console.log('Document not found');
+            return null;
         }
         const updatedDoc = { ...doc, ...data };
         this.documents.set(updatedDoc._id, updatedDoc);
@@ -134,16 +134,16 @@ class Collection {
     }
     /**
      * Actualiza múltiples documentos que coinciden con un filtro.
-     * @param {any} [filter=null] - El filtro que se usa para encontrar los documentos. Si es `null`, muestra un mensaje de advertencia.
+     * @param {object} [filter=null] - El filtro que se usa para encontrar los documentos. Si es `null`, muestra un mensaje de advertencia.
      * @param {object} data - Los nuevos datos que se van a actualizar en los documentos.
-     * @returns {Array} Un array con los documentos actualizados.
+     * @returns {DocumentType[]} Un array con los documentos actualizados.
      */
     updateMany(filter = null, data) {
         if (!filter)
-            return console.log('You must provide a filter');
+            return [];
         const matchingDocs = [...this.documents.values()].filter(doc => (0, helper_js_1.default)(filter, doc));
         if (matchingDocs.length === 0) {
-            return console.log('No documents found to update');
+            return [];
         }
         const updatedDocs = [];
         for (const doc of matchingDocs) {
@@ -155,15 +155,15 @@ class Collection {
     }
     /**
      * Elimina múltiples documentos que coinciden con un filtro.
-     * @param {any} filter - El filtro utilizado para encontrar los documentos que se deben eliminar.
-     * @returns {Array} Un array con los documentos eliminados.
+     * @param {object} filter - El filtro utilizado para encontrar los documentos que se deben eliminar.
+     * @returns {DocumentType[]} Un array con los documentos eliminados.
      */
     deleteMany(filter) {
         if (!filter)
-            return console.log('I cannot delete without a filter');
+            return [];
         const matches = this.find(filter);
         if (!matches)
-            return;
+            return [];
         const deleted = [];
         for (const doc of matches) {
             this.documents.delete(doc._id);

@@ -5,25 +5,28 @@ import Database from './database.js'
 import Collection from './collection.js'
 
 /**
- * Representa un clúster de colecciones en una base de datos.
- * Un clúster es un contenedor que agrupa varias colecciones dentro de una base de datos.
+ * Representa un clúster de colecciones dentro de una base de datos.
+ * Un clúster agrupa múltiples colecciones y gestiona la persistencia de sus datos.
+ * @class
  */
 export default class Cluster {
   /** El nombre del clúster. */
   public name: string
   /** La base de datos a la que pertenece el clúster. */
   public database: Database
-  /** La ruta donde se almacenan las colecciones del clúster. */
+  /** La ruta en el sistema de archivos donde se almacenan las colecciones del clúster. */
   public path: string
-  /** Un mapa de las colecciones del clúster, donde la clave es el nombre de la colección y el valor es la instancia de la colección. */
+  /** Un mapa de colecciones que contiene el nombre de cada colección y su correspondiente instancia. */
   public collections: Map<string, Collection>
-  /** Un indicador que señala si el clúster ha sido guardado o "flushed". */
+  /** Indica si el clúster ha sido "flushed" o si las colecciones han sido guardadas. */
   public flushed: boolean
 
   /**
    * Crea una nueva instancia de la clase Cluster.
    * @param {Database} database - La base de datos a la que pertenece el clúster.
    * @param {string} name - El nombre del clúster.
+   * @example
+   * const cluster = new Cluster(database, 'myCluster');
    */
   constructor(database: Database, name: string) {
     this.name = name
@@ -32,6 +35,7 @@ export default class Cluster {
     this.collections = new Map()
     this.flushed = false
 
+    // Si la ruta ya existe, leer las colecciones dentro de ella
     if (existsSync(this.path)) {
       const entries = readdirSync(this.path, { withFileTypes: true })
       for (const entry of entries) {
@@ -41,6 +45,7 @@ export default class Cluster {
         }
       }
     } else {
+      // Si la ruta no existe, crearla
       mkdirSync(this.path)
     }
 
@@ -51,7 +56,10 @@ export default class Cluster {
   /**
    * Obtiene una colección por su nombre. Si la colección no existe, se crea una nueva.
    * @param {string} collName - El nombre de la colección que se desea obtener.
-   * @returns {Collection} La instancia de la colección.
+   * @returns {Collection} La instancia de la colección correspondiente al nombre proporcionado.
+   * @throws {Error} Si el nombre de la colección es inválido.
+   * @example
+   * const collection = cluster.collection('myCollection');
    */
   collection(collName: string): Collection {
     const existing = this.collections.get(collName)
@@ -62,16 +70,21 @@ export default class Cluster {
   }
 
   /**
-   * Guarda todas las colecciones del clúster. Si se pasa `sync = true`, el guardado será sincrónico.
-   * @param {boolean} [sync=false] - Si es `true`, guarda las colecciones de forma sincrónica; si es `false`, lo hace de forma asíncrona.
+   * Guarda todas las colecciones del clúster. Si `sync` es `true`, las colecciones se guardan de forma sincrónica.
+   * @param {boolean} [sync=false] - Si es `true`, guarda las colecciones de forma sincrónica; si es `false`, se hace de forma asíncrona.
    * @returns {Promise<void>} Una promesa que se resuelve cuando todas las colecciones se han guardado.
+   * @example
+   * // Guardado asíncrono
+   * await cluster.flush(false);
+   *
+   * // Guardado sincrónico
+   * cluster.flush(true);
    */
-  async flush(sync = false): Promise<void> {
+  async flush(sync: boolean = false): Promise<void> {
     if (this.flushed) return
 
     const savePromises: Promise<void>[] = []
 
-    // Guardar las colecciones
     for (const collection of this.collections.values()) {
       if (sync) {
         collection.saveSync()

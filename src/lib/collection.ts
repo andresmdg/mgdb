@@ -1,7 +1,14 @@
 import path from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { writeFile } from 'node:fs/promises'
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs'
 
 import Cluster from './cluster.js'
 import isEqual from '../utils/helper.js'
@@ -19,7 +26,7 @@ export default class Collection {
   /** El clúster al que pertenece la colección. */
   public cluster: Cluster
   /** Mapa de los documentos en la colección, usando el ID del documento como clave. */
-  public documents: Map<string, any>
+  public documents: Map<string, DocumentType>
 
   /**
    * Crea una nueva instancia de la clase Collection.
@@ -35,7 +42,10 @@ export default class Collection {
     if (existsSync(this.path)) {
       const files = readdirSync(this.path, { withFileTypes: true })
       for (const file of files) {
-        const contents = readFileSync(path.resolve(this.path, file.name), 'utf-8')
+        const contents = readFileSync(
+          path.resolve(this.path, file.name),
+          'utf-8'
+        )
         const doc: DocumentType = JSON.parse(contents)
         this.documents.set(doc._id, doc)
       }
@@ -47,11 +57,11 @@ export default class Collection {
   /**
    * Inserta un nuevo documento en la colección con un ID único generado.
    * @param {object} data - Los datos del documento a insertar.
-   * @returns {object} El documento insertado con su ID.
+   * @returns {DocumentType} El documento insertado con su ID.
    */
-  insert(data: object) {
+  insert(data: object): DocumentType {
     const id = randomUUID()
-    const item = { _id: id, ...data }
+    const item: DocumentType = { _id: id, ...data }
     this.documents.set(id, item)
     return item
   }
@@ -60,7 +70,7 @@ export default class Collection {
    * Guarda todos los documentos de la colección de forma asíncrona.
    * @returns {Promise<void>} Una promesa que se resuelve cuando todos los documentos han sido guardados.
    */
-  async save() {
+  async save(): Promise<void> {
     for (const doc of this.documents.values()) {
       const filePath = path.join(this.path, `${doc._id}.json`)
       await writeFile(filePath, JSON.stringify(doc, null, 2), 'utf-8')
@@ -70,7 +80,7 @@ export default class Collection {
   /**
    * Guarda todos los documentos de la colección de forma sincrónica.
    */
-  saveSync() {
+  saveSync(): void {
     for (const doc of this.documents.values()) {
       const filePath = path.join(this.path, `${doc._id}.json`)
       writeFileSync(filePath, JSON.stringify(doc, null, 2), 'utf-8')
@@ -79,15 +89,14 @@ export default class Collection {
 
   /**
    * Busca documentos que coincidan con un filtro específico.
-   * @param {any} [filter=null] - Un objeto de filtro para buscar documentos específicos. Si es `null`, devuelve todos los documentos.
+   * @param {object} [filter=null] - Un objeto de filtro para buscar documentos específicos. Si es `null`, devuelve todos los documentos.
    * @param {number} [limit=2] - El número máximo de documentos a devolver.
-   * @returns {Array} Un array con los documentos que coinciden con el filtro.
+   * @returns {DocumentType[]} Un array con los documentos que coinciden con el filtro.
    */
-  find(filter: any = null, limit: number = 2) {
+  find(filter: object | null = null, limit: number = 2): DocumentType[] {
     if (!filter) return [...this.documents.values()]
-    if (limit < 2)
-      return console.log('Limit must be more than 2 or you can use the findOne function')
-    const matches = []
+    if (limit < 2) return []
+    const matches: DocumentType[] = []
     for (const doc of this.documents.values()) {
       if (limit > 2 && matches.length === limit) break
       if (isEqual(filter, doc)) matches.push(doc)
@@ -98,11 +107,11 @@ export default class Collection {
 
   /**
    * Busca un solo documento que coincida con el filtro proporcionado.
-   * @param {any} [filter=null] - Un objeto de filtro para encontrar el documento. Si es `null`, muestra un mensaje de advertencia.
-   * @returns {object|null} El documento que coincide con el filtro o `null` si no se encuentra.
+   * @param {object} [filter=null] - Un objeto de filtro para encontrar el documento. Si es `null`, muestra un mensaje de advertencia.
+   * @returns {DocumentType|null} El documento que coincide con el filtro o `null` si no se encuentra.
    */
-  findOne(filter: any = null) {
-    if (!filter) return console.log('Must set a filter')
+  findOne(filter: object | null = null): DocumentType | null {
+    if (!filter) return null
     for (const doc of this.documents.values()) {
       if (isEqual(filter, doc)) return doc
     }
@@ -112,28 +121,28 @@ export default class Collection {
   /**
    * Encuentra un documento por su ID.
    * @param {string} id - El ID del documento a buscar.
-   * @returns {object|null} El documento con el ID proporcionado o `null` si no se encuentra.
+   * @returns {DocumentType|null} El documento con el ID proporcionado o `null` si no se encuentra.
    */
-  findById(id: string) {
+  findById(id: string): DocumentType | null {
     return this.documents.get(id) || null
   }
 
   /**
    * Actualiza un solo documento en la colección basado en un filtro.
-   * @param {any} [filter=null] - El filtro que se usa para encontrar el documento. Si es `null`, muestra un mensaje de advertencia.
+   * @param {object} [filter=null] - El filtro que se usa para encontrar el documento. Si es `null`, muestra un mensaje de advertencia.
    * @param {object} data - Los nuevos datos que se van a actualizar en el documento.
-   * @returns {object|null} El documento actualizado o `null` si no se encuentra.
+   * @returns {DocumentType|null} El documento actualizado o `null` si no se encuentra.
    */
-  updateOne(filter: any = null, data: object) {
-    if (!filter) return console.log('You must provide a filter')
+  updateOne(filter: object | null = null, data: object): DocumentType | null {
+    if (!filter) return null
 
     const doc = [...this.documents.values()].find(doc => isEqual(filter, doc))
 
     if (!doc) {
-      return console.log('Document not found')
+      return null
     }
 
-    const updatedDoc = { ...doc, ...data }
+    const updatedDoc: DocumentType = { ...doc, ...data }
 
     this.documents.set(updatedDoc._id, updatedDoc)
 
@@ -142,22 +151,24 @@ export default class Collection {
 
   /**
    * Actualiza múltiples documentos que coinciden con un filtro.
-   * @param {any} [filter=null] - El filtro que se usa para encontrar los documentos. Si es `null`, muestra un mensaje de advertencia.
+   * @param {object} [filter=null] - El filtro que se usa para encontrar los documentos. Si es `null`, muestra un mensaje de advertencia.
    * @param {object} data - Los nuevos datos que se van a actualizar en los documentos.
-   * @returns {Array} Un array con los documentos actualizados.
+   * @returns {DocumentType[]} Un array con los documentos actualizados.
    */
-  updateMany(filter: any = null, data: object) {
-    if (!filter) return console.log('You must provide a filter')
+  updateMany(filter: object | null = null, data: object): DocumentType[] {
+    if (!filter) return []
 
-    const matchingDocs = [...this.documents.values()].filter(doc => isEqual(filter, doc))
+    const matchingDocs: DocumentType[] = [...this.documents.values()].filter(
+      doc => isEqual(filter, doc)
+    )
 
     if (matchingDocs.length === 0) {
-      return console.log('No documents found to update')
+      return []
     }
 
-    const updatedDocs = []
+    const updatedDocs: DocumentType[] = []
     for (const doc of matchingDocs) {
-      const updatedDoc = { ...doc, ...data }
+      const updatedDoc: DocumentType = { ...doc, ...data }
       this.documents.set(updatedDoc._id, updatedDoc)
       updatedDocs.push(updatedDoc)
     }
@@ -166,14 +177,14 @@ export default class Collection {
 
   /**
    * Elimina múltiples documentos que coinciden con un filtro.
-   * @param {any} filter - El filtro utilizado para encontrar los documentos que se deben eliminar.
-   * @returns {Array} Un array con los documentos eliminados.
+   * @param {object} filter - El filtro utilizado para encontrar los documentos que se deben eliminar.
+   * @returns {DocumentType[]} Un array con los documentos eliminados.
    */
-  deleteMany(filter: any) {
-    if (!filter) return console.log('I cannot delete without a filter')
+  deleteMany(filter: object): DocumentType[] {
+    if (!filter) return []
     const matches = this.find(filter)
-    if (!matches) return
-    const deleted = []
+    if (!matches) return []
+    const deleted: DocumentType[] = []
     for (const doc of matches) {
       this.documents.delete(doc._id)
       const filePath = path.join(this.path, `${doc._id}.json`)
