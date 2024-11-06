@@ -3,6 +3,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Database = void 0;
-var database_js_1 = require("./lib/database.js");
-Object.defineProperty(exports, "Database", { enumerable: true, get: function () { return __importDefault(database_js_1).default; } });
+const database_js_1 = __importDefault(require("./lib/database.js"));
+module.exports = database_js_1.default;
+module.exports.default = database_js_1.default;
