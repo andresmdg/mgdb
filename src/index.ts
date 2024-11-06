@@ -1,4 +1,1 @@
-import Database from './lib/database.js'
-
-export { Database }
-export default Database
+export { default } from './lib/database.js'
