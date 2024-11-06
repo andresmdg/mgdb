@@ -1,6 +1,6 @@
 {
   "name": "mgdb",
-  "version": "0.1.6",
+  "version": "1.0.0",
   "description": "Base de datos usando Json",
   "main": "dist/cjs/index.cjs.js",
   "type": "module",
