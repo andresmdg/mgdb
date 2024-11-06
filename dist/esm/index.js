@@ -1,1 +1,1 @@
-export { default } from './lib/database.js';
+export { default as Database } from './lib/database.js';
